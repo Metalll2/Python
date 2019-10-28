@@ -1,0 +1,212 @@
+import tkinter as tk
+from tkinter import ttk
+from tkinter import DoubleVar, StringVar
+import sqlite3
+import time
+
+
+class Main(tk.Frame):
+    def __init__(self, root):
+        super().__init__(root)
+        self.init_main()
+        self.db = db
+        self.view_records()
+
+
+    def init_main(self):
+        toolbar = tk.Frame(bg="#d7d8e0", bd=2)
+        toolbar.pack(side=tk.TOP, fill=tk.X)
+
+        toolbar2 = tk.Frame(bg="#d7d8e0", bd=2)
+        toolbar2.pack(side=tk.BOTTOM, fill=tk.X)
+
+
+        self.add_img = tk.PhotoImage(file="add.gif")
+        btn_open_dialog = tk.Button(toolbar, text="Добавить позицию", command=self.open_dialog, bg="#d7d8e0", bd=0,
+                                    compound=tk.TOP, image=self.add_img)
+        btn_open_dialog.pack(side=tk.LEFT)
+
+        self.update_img = tk.PhotoImage(file="update_img.gif")
+        btn_edit_update = tk.Button(toolbar, text="Редактирование", command=self.open_update_dialog, bg="#d7d8e0", bd=0,
+                                    compound=tk.TOP, image=self.update_img)
+        btn_edit_update.pack(side=tk.LEFT)
+
+        self.delete_img = tk.PhotoImage(file="delete.gif")
+        btn_delete = tk.Button(toolbar, text="Удаление записей", command=self.delete_records, bg="#d7d8e0", bd=0,
+                                    compound=tk.TOP, image=self.delete_img)
+        btn_delete.pack(side=tk.LEFT)
+
+
+
+        label_time = tk.Label(toolbar2,  bg="#d7d8e0", bd=0)
+        label_time.pack(side=tk.LEFT)
+        self.update_label((label_time))
+
+
+        label_edit_sum = tk.Label(toolbar2, bg="#d7d8e0", bd=0)
+        label_edit_sum.pack(side=tk.RIGHT)
+        self.total_sum(label_edit_sum)
+
+        label_total_sum = tk.Label(toolbar2, text="Сумма: ", bg="#d7d8e0", bd=0)
+        label_total_sum.pack(side=tk.RIGHT)
+
+        self.tree = ttk.Treeview(self, columns=("ID", "description", "costs", "total"), heigh=15, show="headings")
+
+        self.tree.column("ID", width=30, anchor=tk.CENTER)
+        self.tree.column("description", width=365, anchor=tk.CENTER)
+        self.tree.column("costs", width=150, anchor=tk.CENTER)
+        self.tree.column("total", width=100, anchor=tk.CENTER)
+
+        self.tree.heading("ID", text="ID")
+        self.tree.heading("description", text="Наименование")
+        self.tree.heading("costs", text="Статья дохода\расхода")
+        self.tree.heading("total", text="Сумма")
+
+        self.tree.pack()
+
+
+    def update_label(self, label):
+        def hashrate():
+            update = 1000
+            nowtime = time.asctime(time.localtime(time.time()))
+            label.config(text=nowtime)
+            label.after(update, hashrate)
+        hashrate()
+
+
+
+    def records(self, description, costs, total):
+        self.db.insert_data(description, costs, total)
+        self.view_records()
+
+
+    def update_records(self, description, costs, total):
+        self.db.c.execute('''UPDATE finance SET description=?, costs=?, total=? WHERE ID=? ''',
+                          (description, costs, total, self.tree.set(self.tree.selection()[0], '#1'),))
+        self.db.conn.commit()
+        self.view_records()
+
+
+    def delete_records(self):
+        for select in self.tree.selection():
+            self.db.c.execute('''DELETE from finance WHERE ID=? ''', (self.tree.set(select, '#1'),))
+
+        self.db.conn.commit()
+        self.view_records()
+
+    def total_sum(self, label):
+        def hashrate():
+            db.c.execute('''SELECT total FROM finance''')
+
+            raws = [item[0] for item in db.c.fetchall()]
+            total_summa = 0.0
+            if raws:
+                for i in range(len(raws)):
+                    raws1 = raws[i]
+                    total_summa = total_summa + raws1
+
+            label.config(text=total_summa)
+            label.after(1000, hashrate)
+        hashrate()
+
+    def view_records(self):
+        self.db.c.execute('''SELECT * FROM finance''')
+        [self.tree.delete(i) for i in self.tree.get_children()]
+        [self.tree.insert('', 'end', values=row) for row in self.db.c.fetchall()]
+
+    def open_dialog(self):
+        Child()
+
+    def open_update_dialog(self):
+        Update()
+
+class Child(tk.Toplevel):
+    def __init__(self):
+        super().__init__(root)
+        self.init_child()
+        self.view = app
+
+    def init_child(self):
+        self.title("Добавить доходы и расходы")
+        self.geometry("400x220+400+300")
+        self.resizable(False, False)
+
+        label_description = tk.Label(self, text="Наименование:")
+        label_description.place(x=50, y=50)
+        label_select = tk.Label(self, text="Статья дохода\расхода:")
+        label_select.place(x=50, y=80)
+        label_sum = tk.Label(self, text="Сумма:")
+        label_sum.place(x=50, y=110)
+
+        self.entry_description = ttk.Entry(self)
+        self.entry_description.place(x=200, y=50)
+
+        number = DoubleVar()
+        number.trace('w', lambda name, idx, mode, arg=number: self.proverka_number(arg))
+
+        self.entry_money = ttk.Entry(self, textvariable=number)
+        self.entry_money.place(x=200, y=110)
+
+        self.combobox = ttk.Combobox(self, values=[u'Доход', u'Расход'])
+        self.combobox.current(0)
+        self.combobox.place(x=200, y=80)
+
+        btn_canсel = ttk.Button(self, text="Закрыть", command=self.destroy)
+        btn_canсel.place(x=300, y=170)
+
+        self.btn_ok = ttk.Button(self, text="Добавить")
+        self.btn_ok.place(x=220, y=170)
+        self.btn_ok.bind('<Button-1>', lambda event: self.view.records(self.entry_description.get(),
+                                                                       self.combobox.get(),
+                                                                       self.entry_money.get()))
+
+        self.grab_set()
+        self.focus_set()
+    def proverka_number(self, arg):
+
+        try:
+            self.number = arg.get()
+            if self.number == float or int:
+                self.number = arg.get()
+        except:
+            arg.set("")
+
+class Update(Child):
+    def __init__(self):
+        super().__init__()
+        self.init_edit()
+        self.view = app
+
+    def init_edit(self):
+        self.title("Редактировать позицию")
+        btn_edit = ttk.Button(self, text="Редактировать")
+        btn_edit.place(x=205, y=170)
+        btn_edit.bind('<Button-1>', lambda event: self.view.update_records(self.entry_description.get(),
+                                                                           self.combobox.get(),
+                                                                           self.entry_money.get()))
+
+        self.btn_ok.destroy()
+
+class DB:
+    def __init__(self):
+        self.conn = sqlite3.connect("finance.db")
+        self.c = self.conn.cursor()
+        self.c.execute(
+            '''CREATE TABLE IF NOT EXISTS finance (id integer primary key, description text, costs text, total real)''')
+        self.conn.commit()
+
+    def insert_data(self, description, costs, total):
+        self.c.execute('''INSERT INTO finance(description, costs, total) VALUES (?, ?, ?)''',
+                       (description, costs, total))
+        self.conn.commit()
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    db = DB()
+    app = Main(root)
+    app.pack()
+    root.title("Household finance")
+    root.geometry("650x450+300+200")
+    root.resizable(False, False)
+    root.mainloop()
+
