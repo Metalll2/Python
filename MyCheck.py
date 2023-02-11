@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter.ttk import * 
 from tkinter.messagebox import *
+import threading 
 import time
 import requests
 import sqlite3
@@ -17,6 +18,7 @@ class Application1(Frame):
         super(Application1, self).__init__(master, borderwidth=0, relief=SOLID)
         self.place(x=0, y=0, width=701, height=420)
         self.create_widgets()
+
     def create_widgets(self):
         self.__columns = ('Номер строки','Рубль','Доллар','Евро','Юань', 'Золото','Серебро')
         self.tree = Treeview(self, show='headings', columns=self.__columns, height=100)
@@ -38,7 +40,24 @@ class Application1(Frame):
             self.open_info("Сообщение", "Данные записаны.")
         else:
             self.open_info("Сообщение", "Значения равны нулю.")
-            
+
+    def auto_record(self):
+        self.state = menuapp.return_state()
+        global start
+        if self.state == 1:
+            for self.tre in self.tree.get_children():
+                    print(self.tree.item(self.tre, 'value'))
+                    self.item = self.tree.item(self.tre, 'value')
+                    self.id = self.item[0]
+                    self.Rate = Application2.returnRate(self)
+                    db.cursor.execute("UPDATE mycheck SET (Ruble, Dollar, EURO, YUAN) = (?,?,?,?) WHERE id = (?)",(float(self.item[1]),round(float(self.item[1])/float(self.Rate['USD']),2),round(float(self.item[1])/float(self.Rate['EUR']),2),round(float(self.item[1])/float(self.Rate['CNY']),2), self.id))
+            db.sql.commit()
+            self.view_records()
+            start = root.after(5000, self.auto_record)
+            print 
+        else:
+            root.after_cancel(start)
+
     def view_records(self):
         for i in self.tree.get_children():
             self.tree.delete(i)
@@ -76,7 +95,7 @@ class Application2(Frame):
         self.place(x=700, y=0, width=157, height=420)
         self.create_widgets()
         self.setRate()
-        
+
     def create_widgets(self):
         self.tree_right = Treeview(self, height=100)
         self.tree_right.heading("#0", text="Курс валюты и металлов")
@@ -88,16 +107,19 @@ class Application2(Frame):
             self.d = requests.get(URLRATE)
             self.dataRate = self.d.json()
             self.listValute = ['USD', 'EUR', 'CNY']
-            self.Rate = {}
+
             for i in range(len(self.listValute)):
-                self.Rate[self.listValute[i]] = self.dataRate['Valute'][self.listValute[i]]['Value']
-            for __id in self.Rate:
-                self.tree_right.insert('',END ,iid= __id, text = __id+"/RUB = " + str(round(self.Rate[__id], 2)))
-            root.after(1000, self.setRate)
+                Application2.Rate[self.listValute[i]] = self.dataRate['Valute'][self.listValute[i]]['Value']
+            for __id in Application2.Rate:
+                self.tree_right.insert('',END ,iid= __id, text = __id+"/RUB = " + str(round(Application2.Rate[__id], 2)))
+            root.after(10000, self.setRate)
         
         except Exception as ex:
             print("Set Rate: Connection is falled", ex)
             pass
+    Rate={}  
+    def returnRate(self):
+        return Application2.Rate
 class Application3(Frame):
     def __init__(self, master):
         super(Application3, self).__init__(master, borderwidth=0, relief=SOLID)
@@ -125,7 +147,7 @@ class Application3(Frame):
             r = requests.get(URL, params=PARAM)
             data = r.json()
             self.lblweather['text'] = "Погода: " + str(data['main']['feels_like']) +', ' + data['weather'][0]['description']
-            root.after(10000,self.setWeather)
+            root.after(60000,self.setWeather)
         except Exception as ex:
             print("Set Weaather: Connection is falled", ex)
             pass
@@ -181,29 +203,29 @@ class popupEdit(Toplevel):
             if(self.entryRuble.get() != ""):#or self.entryDollar.get() != "" or self.entryEuro.get() != "" or self.entryYuan.get() != "" or self.entryGold.get() != "" or self.entrySerebro.get() != ""):
                 self.rub = float(self.entryRuble.get())
                 self.entryDollar.delete(0,END)
-                self.entryDollar.insert(0, str(round((self.rub/float(app2.Rate['USD'])),2)))
+                self.entryDollar.insert(0, str(round((self.rub/float(Application2.Rate['USD'])),2)))
                 self.entryEuro.delete(0,END)
-                self.entryEuro.insert(0,str(round(self.rub/float(app2.Rate['EUR']),2)))
+                self.entryEuro.insert(0,str(round(self.rub/float(Application2.Rate['EUR']),2)))
                 self.entryYuan.delete(0,END)
-                self.entryYuan.insert(0,str(round(self.rub/float(app2.Rate['CNY']),2)))
+                self.entryYuan.insert(0,str(round(self.rub/float(Application2.Rate['CNY']),2)))
             elif(self.entryDollar.get() != ""):
                 self.dollars = float(self.entryDollar.get())
                 self.entryRuble.delete(0,END)
-                self.entryRuble.insert(0, str(round((self.dollars*float(app2.Rate['USD'])),2)))
+                self.entryRuble.insert(0, str(round((self.dollars*float(Application2.Rate['USD'])),2)))
                 self.rub = float(self.entryRuble.get())
                 self.entryEuro.delete(0,END)
-                self.entryEuro.insert(0,str(round(self.rub/float(app2.Rate['EUR']),2)))
+                self.entryEuro.insert(0,str(round(self.rub/float(Application2.Rate['EUR']),2)))
                 self.entryYuan.delete(0,END)
-                self.entryYuan.insert(0,str(round(self.rub/float(app2.Rate['CNY']),2)))
+                self.entryYuan.insert(0,str(round(self.rub/float(Application2.Rate['CNY']),2)))
             elif(self.entryYuan.get() != ""):
                 self.cny = float(self.entryYuan.get())
                 self.entryRuble.delete(0,END)
-                self.entryRuble.insert(0, str(round((self.cny*float(app2.Rate['CNY'])),2)))
+                self.entryRuble.insert(0, str(round((self.cny*float(Application2.Rate['CNY'])),2)))
                 self.rub = float(self.entryRuble.get())
                 self.entryDollar.delete(0,END)
-                self.entryDollar.insert(0, str(round((self.rub/float(app2.Rate['USD'])),2)))
+                self.entryDollar.insert(0, str(round((self.rub/float(Application2.Rate['USD'])),2)))
                 self.entryEuro.delete(0,END)
-                self.entryEuro.insert(0,str(round(self.rub/float(app2.Rate['EUR']),2)))
+                self.entryEuro.insert(0,str(round(self.rub/float(Application2.Rate['EUR']),2)))
             else:
                  pass
         else:
@@ -236,7 +258,10 @@ class MainMenu:
 
     def createMenu(self):
         self.file_menu = Menu()
+        self.auto_update = IntVar()
+        self.auto_update.set(0)
         self.file_menu.add_command(label='Новый', command=app1.new_file)
+        self.file_menu.add_checkbutton(label='Обновлять счет', variable= self.auto_update, command=self.checkbutton_changed)
         self.file_menu.add_separator()
         self.file_menu.add_command(label='Закрыть', command=root.destroy)
 
@@ -252,14 +277,29 @@ class MainMenu:
         self.file_menuedit = Menu()
         self.file_menuedit.add_command(label='Добавить запись', command=popupEdit)
         self.file_menuedit.add_command(label='Удалить запись', command=app1.delete_record)
+        
+        self.about_app = Menu()
+        self.about_app.add_command(label='О программе', command=self.show_info)
 
         self.main_menu.add_cascade(label='Файл', menu=self.file_menu)
         self.main_menu.add_cascade(label='Создать', menu=self.file_menuedit)
         self.main_menu.add_cascade(label='Вид', menu=self.theme_menu)
-        self.main_menu.add_cascade(label='Справка')     
+        self.main_menu.add_cascade(label='Справка', menu = self.about_app)     
     
     def setTheme(self):
         self.style.theme_use(self.theme.get())
+    def show_info(self):
+        showinfo(title="MyCheck", message="Программа отслеживает время, погоду и курсы валют. Можно вносить в БД кол-во рублей," 
+        "евро, долларов, золото и серебро.Есть галочка для автоматического расчета. Допустим есть рубли, на основе курса валют "
+        "можно сделать расчет сколько это в других валютах.")
+
+    def checkbutton_changed(self):
+        print(self.auto_update.get())
+        app1.auto_record()
+    def return_state(self):
+        return self.auto_update.get()  
+               
+            
     
 root = Tk()
 db = DB()
@@ -275,6 +315,5 @@ app3 = Application3(root)
 
 menuapp = MainMenu()
 root.config(menu=menuapp.main_menu)
-
 root.mainloop()
 
