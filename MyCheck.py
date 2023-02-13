@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter.ttk import * 
 from tkinter.messagebox import *
-import threading 
+from tkinter.filedialog import *
 import time
 import requests
 import sqlite3
@@ -54,7 +54,6 @@ class Application1(Frame):
             db.sql.commit()
             self.view_records()
             start = root.after(5000, self.auto_record)
-            print 
         else:
             root.after_cancel(start)
 
@@ -230,6 +229,23 @@ class popupEdit(Toplevel):
                  pass
         else:
             pass     
+class popupSave:
+    def __init__(self):
+        self.initSavePopup()
+    
+    def initSavePopup(self):
+        self.file = asksaveasfile(filetypes=(("TXT files", "*.txt"), ("All files", "*.*")))
+        self.write_file = open(r"{self.file}", 'w')
+        db.cursor.execute("SELECT * FROM mycheck")
+        db.sql.commit()
+        self.datas = db.cursor.fetchall()
+        for self.data in self.datas:
+            self.write_file.write(str(self.data) + '\n')
+           
+        self.write_file.flush()   
+        self.write_file.close()
+       
+      
 class DB:
     def __init__(self):
         try:
@@ -262,6 +278,7 @@ class MainMenu:
         self.auto_update.set(0)
         self.file_menu.add_command(label='Новый', command=app1.new_file)
         self.file_menu.add_checkbutton(label='Обновлять счет', variable= self.auto_update, command=self.checkbutton_changed)
+        self.file_menu.add_command(label='Сохранить', command=popupSave)
         self.file_menu.add_separator()
         self.file_menu.add_command(label='Закрыть', command=root.destroy)
 
@@ -294,7 +311,6 @@ class MainMenu:
         "можно сделать расчет сколько это в других валютах.")
 
     def checkbutton_changed(self):
-        print(self.auto_update.get())
         app1.auto_record()
     def return_state(self):
         return self.auto_update.get()  
