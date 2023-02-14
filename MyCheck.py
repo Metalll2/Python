@@ -5,6 +5,8 @@ from tkinter.filedialog import *
 import time
 import requests
 import sqlite3
+import sys
+
 #cntrl +/
 
 KEY = "11a1324bcbefe090f527882d2da3e045"
@@ -234,18 +236,13 @@ class popupSave:
         self.initSavePopup()
     
     def initSavePopup(self):
-        self.file = asksaveasfile(filetypes=(("TXT files", "*.txt"), ("All files", "*.*")))
-        self.write_file = open(r"{self.file}", 'w')
-        db.cursor.execute("SELECT * FROM mycheck")
-        db.sql.commit()
-        self.datas = db.cursor.fetchall()
-        for self.data in self.datas:
-            self.write_file.write(str(self.data) + '\n')
-           
-        self.write_file.flush()   
-        self.write_file.close()
+        self.file = asksaveasfile()
+        if self.file:
+            self.get_datas = app1.tree
+            for self.get_data in self.get_datas.get_children():
+                self.file.write(str(self.get_datas.item(self.get_data)) + '\n')
+            self.file.close()
        
-      
 class DB:
     def __init__(self):
         try:
