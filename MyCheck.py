@@ -52,7 +52,19 @@ class Application1(Frame):
                     self.item = self.tree.item(self.tre, 'value')
                     self.id = self.item[0]
                     self.Rate = Application2.returnRate(self)
-                    db.cursor.execute("UPDATE mycheck SET (Ruble, Dollar, EURO, YUAN) = (?,?,?,?) WHERE id = (?)",(float(self.item[1]),round(float(self.item[1])/float(self.Rate['USD']),2),round(float(self.item[1])/float(self.Rate['EUR']),2),round(float(self.item[1])/float(self.Rate['CNY']),2), self.id))
+                    if self.item[1]:
+                        db.cursor.execute("UPDATE mycheck SET (Ruble, Dollar, EURO, YUAN) = (?,?,?,?) WHERE id = (?)",(float(self.item[1]),round(float(self.item[1])/float(self.Rate['USD']),2),round(float(self.item[1])/float(self.Rate['EUR']),2),round(float(self.item[1])/float(self.Rate['CNY']),2), self.id))
+                    elif self.item[2]: 
+                        self.ruble = round(float(self.item[2])*float(self.Rate['USD']),2)
+                        db.cursor.execute("UPDATE mycheck SET (Ruble, Dollar, EURO, YUAN) = (?,?,?,?) WHERE id = (?)",(float(self.ruble),round(float(self.item[2]),2),round(float(self.ruble)/float(self.Rate['EUR']),2),round(float(self.ruble)/float(self.Rate['CNY']),2), self.id))
+                    elif self.item[3]: 
+                        self.ruble = round(float(self.item[3])*float(self.Rate['EUR']),2)
+                        db.cursor.execute("UPDATE mycheck SET (Ruble, Dollar, EURO, YUAN) = (?,?,?,?) WHERE id = (?)",(float(self.ruble),round(float(self.ruble)/float(self.Rate['USD']),2),round(float(self.item[3]),2),round(float(self.ruble)/float(self.Rate['CNY']),2), self.id))
+                    elif self.item[4]: 
+                        self.ruble = round(float(self.item[4])*float(self.Rate['CNY']),2)
+                        db.cursor.execute("UPDATE mycheck SET (Ruble, Dollar, EURO, YUAN) = (?,?,?,?) WHERE id = (?)",(float(self.ruble),round(float(self.ruble)/float(self.Rate['USD']),2),round(float(self.ruble)/float(self.Rate['EUR']),2),round(float(self.item[4]),2), self.id))
+                    else:
+                        pass
             db.sql.commit()
             self.view_records()
             start = root.after(5000, self.auto_record)
@@ -112,11 +124,11 @@ class Application2(Frame):
             for i in range(len(self.listValute)):
                 Application2.Rate[self.listValute[i]] = self.dataRate['Valute'][self.listValute[i]]['Value']
             for __id in Application2.Rate:
-                self.tree_right.insert('',END ,iid= __id, text = __id+"/RUB = " + str(round(Application2.Rate[__id], 2)))
+                self.tree_right.insert('',END ,iid= __id, text = __id+"/RUB = " + str(round(Application2.Rate[__id], 3)))
             root.after(10000, self.setRate)
         
         except Exception as ex:
-            print("Set Rate: Connection is falled", ex)
+            print("Set Rate: Connection is falled: ", ex)
             pass
     Rate={}  
     def returnRate(self):
@@ -218,6 +230,15 @@ class popupEdit(Toplevel):
                 self.entryEuro.insert(0,str(round(self.rub/float(Application2.Rate['EUR']),2)))
                 self.entryYuan.delete(0,END)
                 self.entryYuan.insert(0,str(round(self.rub/float(Application2.Rate['CNY']),2)))
+            elif(self.entryEuro.get() != ""):
+                self.cny = float(self.entryEuro.get())
+                self.entryRuble.delete(0,END)
+                self.entryRuble.insert(0, str(round((self.cny*float(Application2.Rate['EUR'])),2)))
+                self.rub = float(self.entryRuble.get())
+                self.entryDollar.delete(0,END)
+                self.entryDollar.insert(0, str(round((self.rub/float(Application2.Rate['USD'])),2)))
+                self.entryYuan.delete(0,END)
+                self.entryYuan.insert(0,str(round(self.rub/float(Application2.Rate['CNY']),2)))
             elif(self.entryYuan.get() != ""):
                 self.cny = float(self.entryYuan.get())
                 self.entryRuble.delete(0,END)
@@ -240,7 +261,8 @@ class popupSave:
         if self.file:
             self.get_datas = app1.tree
             for self.get_data in self.get_datas.get_children():
-                self.file.write(str(self.get_datas.item(self.get_data)) + '\n')
+                self.item = self.get_datas.item(self.get_data)
+                self.file.write(f"id: {str(self.item['values'][0]):5}"  f"Ruble: {str(self.item['values'][1]):15}"  f"Dollar: {str(self.item['values'][2]):15}"  f"EURO: {str(self.item['values'][3]):15}"  f"CNY: {str(self.item['values'][4]):15}\n")
             self.file.close()
        
 class DB:
