@@ -5,7 +5,8 @@ from tkinter.filedialog import *
 import time
 import requests
 import sqlite3
-import sys
+import re
+
 
 #cntrl +/
 
@@ -169,48 +170,52 @@ class popupEdit(Toplevel):
         super().__init__(root)
         self.initPopup()
         self.view = app1
-    
+
     def initPopup(self):
+    
         self.title("Новое окно")
         self.geometry("350x300+700+300")
         self.resizable(False, False)
         self.state_check = IntVar()
         self.check = Checkbutton(self, text="Автоматический расчет по курсу ЦБ.", variable=self.state_check, command=self.auto_calculate)
         self.check.place(x=0, y=10)
+
+        check_validate = (self.register(self.is_valid), '%P')
+
         self.labelRuble = Label(self, text = "Рубль:")
         self.labelRuble.place(x=0 , y=40)
-        self.entryRuble = Entry(self)
+        self.entryRuble = Entry(self, validate='key', validatecommand=check_validate)
         self.entryRuble.place(x=60, y=40)
         self.labelDollar = Label(self, text = "Доллар:")
         self.labelDollar.place(x=0, y=80)
-        self.entryDollar = Entry(self)
+        self.entryDollar = Entry(self, validate='key', validatecommand=check_validate)
         self.entryDollar.place(x=60, y=80)
         self.labelEuro = Label(self, text = "Евро:")
         self.labelEuro.place(x=0, y=120)
-        self.entryEuro = Entry(self)
+        self.entryEuro = Entry(self, validate='key', validatecommand=check_validate)
         self.entryEuro.place(x=60, y=120)
         self.labelYuan= Label(self, text = "Юань:")
         self.labelYuan.place(x=0, y=160)
-        self.entryYuan = Entry(self)
+        self.entryYuan = Entry(self, validate='key', validatecommand=check_validate)
         self.entryYuan.place(x=60, y=160)
         self.labelGold = Label(self, text = "Золото:")
         self.labelGold.place(x=0, y=200)
-        self.entryGold= Entry(self)
+        self.entryGold= Entry(self, validate='key', validatecommand=check_validate)
         self.entryGold.place(x=60, y=200)
         self.labelSerebro = Label(self, text = "Серебро:")
         self.labelSerebro.place(x=0, y=240)
-        self.entrySerebro = Entry(self)
+        self.entrySerebro = Entry(self, validate='key', validatecommand=check_validate)
         self.entrySerebro.place(x=60, y=240)
         self.btn = Button(self, text="OK")
         self.btn.bind('<Button-1>', lambda event: app1.record(self.entryRuble.get(),  self.entryDollar.get(), self.entryEuro.get(), self.entryYuan.get(), self.entryGold.get(),self.entrySerebro.get()))
         self.btn.place(x=260, y=120)
         self.btn_close = Button(self, text="Закрыть", command=self.destroy)
         self.btn_close.place(x=260, y=160)
-    
+
         self.grab_set()
         self.focus_set()
+        
   
-    
     def auto_calculate(self):
         if(self.state_check.get() == 1):
             if(self.entryRuble.get() != ""):#or self.entryDollar.get() != "" or self.entryEuro.get() != "" or self.entryYuan.get() != "" or self.entryGold.get() != "" or self.entrySerebro.get() != ""):
@@ -252,6 +257,15 @@ class popupEdit(Toplevel):
                  pass
         else:
             pass     
+    def is_valid(self, newval):
+        #self.result =  re.match(r'[0-9.]+[0-9]+[^a-zA-Z]{1,}',newval)
+        try:
+            x = float(newval)
+            return True
+        except ValueError:     
+            return False
+            
+
 class popupSave:
     def __init__(self):
         self.initSavePopup()
