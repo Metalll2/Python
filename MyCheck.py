@@ -5,7 +5,7 @@ from tkinter.filedialog import *
 import time
 import requests
 import sqlite3
-import re
+
 
 
 #cntrl +/
