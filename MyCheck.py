@@ -7,16 +7,15 @@ import requests
 import sqlite3
 
 
-
 #cntrl +/
 
-KEY = "11a1324bcbefe090f527882d2da3e045"
-CITY_ID = 486137
-PARAM = {'id':CITY_ID, 'units': 'metric', 'lang': 'ru', 'APPID': KEY}
-URL = "http://api.openweathermap.org/data/2.5/weather"
-URLRATE = "https://www.cbr-xml-daily.ru/daily_json.js"
+KEY = "11a1324bcbefe090f527882d2da3e045"                              #ключ для успешного запроса request
+CITY_ID = 486137                                                      #id города Сургут
+PARAM = {'id':CITY_ID, 'units': 'metric', 'lang': 'ru', 'APPID': KEY} #параметры для запроса request
+URL = "http://api.openweathermap.org/data/2.5/weather"                #ссылка на json данные, которые получаем погоду
+URLRATE = "https://www.cbr-xml-daily.ru/daily_json.js"                #ссылка на json данные, которые получаем курс валют
 
-class Application1(Frame):
+class Application1(Frame):                                            #Центральное окно, где отображаются основные записи и где происходят основные действия
     def __init__(self, master):
         super(Application1, self).__init__(master, borderwidth=0, relief=SOLID)
         self.place(x=0, y=0, width=701, height=420)
@@ -103,7 +102,7 @@ class Application1(Frame):
         db.sql.commit()
         self.open_info("Сообщение", "Лист пуст.")
         self.view_records()    
-class Application2(Frame):
+class Application2(Frame):                                            #Правое окно , где отображабтся курсы валют, в дальнейшем может будут курсы драг металлов
     def __init__(self, master):
         super(Application2, self).__init__(master, borderwidth=0, relief=SOLID)
         self.place(x=700, y=0, width=157, height=420)
@@ -134,7 +133,7 @@ class Application2(Frame):
     Rate={}  
     def returnRate(self):
         return Application2.Rate
-class Application3(Frame):
+class Application3(Frame):                                            #Подвал , где отображается город, погода и время.
     def __init__(self, master):
         super(Application3, self).__init__(master, borderwidth=0, relief=SOLID)
         self.place(x=0, y=420, width=857, height=30)
