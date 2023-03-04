@@ -10,7 +10,7 @@ import sqlite3
 #cntrl +/
 
 KEY = "11a1324bcbefe090f527882d2da3e045"                              #ключ для успешного запроса request
-CITY_ID = 486137                                                      #id города Сургут
+CITY_ID = 486137                                                      #id города 
 PARAM = {'id':CITY_ID, 'units': 'metric', 'lang': 'ru', 'APPID': KEY} #параметры для запроса request
 URL = "http://api.openweathermap.org/data/2.5/weather"                #ссылка на json данные, которые получаем погоду
 URLRATE = "https://www.cbr-xml-daily.ru/daily_json.js"                #ссылка на json данные, которые получаем курс валют
